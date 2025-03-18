@@ -34,6 +34,7 @@ android {
     dataBinding {
         enabled = true
     }
+    namespace 'com.ishihata_tech.myna_card_demo'
 }
 
 dependencies {
