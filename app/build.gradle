@@ -31,8 +31,8 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
-    dataBinding {
-        enabled = true
+    buildFeatures {
+        dataBinding = true
     }
     namespace 'com.ishihata_tech.myna_card_demo'
 }
