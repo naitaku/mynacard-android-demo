@@ -1,18 +1,15 @@
 package com.ishihata_tech.myna_card_demo.myna
 
-import android.nfc.Tag
-import android.nfc.tech.IsoDep
 import android.util.Log
+import com.ishihata_tech.myna_card_demo.nfcproxy.IsoDepProxy
 
 /**
  * @see `https://github.com/jpki/myna`
  */
-class Reader(nfcTag: Tag) {
+class Reader(private val isoDep: IsoDepProxy) {
     companion object {
         private const val LOG_TAG = "Reader"
     }
-
-    private val isoDep = IsoDep.get(nfcTag)
 
     fun connect() {
         isoDep.connect()
@@ -84,7 +81,7 @@ class Reader(nfcTag: Tag) {
         }
     }
 
-    fun trans(apdu: APDU): Triple<Byte, Byte, ByteArray> {
+    private fun trans(apdu: APDU): Triple<Byte, Byte, ByteArray> {
         Log.d(LOG_TAG, "Request: ${apdu.command.toHexString()}")
         val ret = isoDep.transceive(apdu.command)
         Log.d(LOG_TAG, "Response: ${ret.toHexString()}")

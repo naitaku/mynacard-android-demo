@@ -1,7 +1,5 @@
 package com.ishihata_tech.myna_card_demo.ui.common
 
-import android.nfc.NfcAdapter
-import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,9 +13,12 @@ import androidx.fragment.app.FragmentManager
 import com.ishihata_tech.myna_card_demo.R
 import com.ishihata_tech.myna_card_demo.databinding.CommunicateDialogBinding
 import com.ishihata_tech.myna_card_demo.myna.Reader
+import com.ishihata_tech.myna_card_demo.nfcproxy.impl.AndroidNfcAdapter
+import com.ishihata_tech.myna_card_demo.nfcproxy.IsoDepProxy
+import com.ishihata_tech.myna_card_demo.nfcproxy.NfcAdapterProxy
 import java.io.IOException
 
-class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
+class CommunicateDialogFragment : DialogFragment() {
     enum class State {
         WAIT_FOR_CARD, CONNECTING
     }
@@ -26,7 +27,7 @@ class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
         fun onConnect(reader: Reader)
     }
 
-    private lateinit var nfcAdapter: NfcAdapter
+    private lateinit var nfcAdapter: NfcAdapterProxy
     private val handler = Handler(Looper.getMainLooper())
     private var binding: CommunicateDialogBinding? = null
 
@@ -52,7 +53,7 @@ class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
         }
         isCancelable = false
 
-        nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+        nfcAdapter = AndroidNfcAdapter(requireContext(), requireActivity())
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -62,17 +63,12 @@ class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
 
     override fun onResume() {
         super.onResume()
-        nfcAdapter.enableReaderMode(
-            activity,
-            this,
-            NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
-            null
-        )
+        nfcAdapter.enableReaderMode(::onCardDetected)
     }
 
     override fun onPause() {
         try {
-            nfcAdapter.disableReaderMode(activity)
+            nfcAdapter.disableReaderMode()
         } catch (e: Exception) {
             Log.d(LOG_TAG, "Failed to disable reader mode", e)
         }
@@ -99,7 +95,7 @@ class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
         return binding!!.root
     }
 
-    override fun onTagDiscovered(tag: Tag?) {
+    fun onCardDetected(isoDep: IsoDepProxy) {
         if (tag == null) return
 
         val listener = parentFragment
@@ -109,7 +105,7 @@ class CommunicateDialogFragment : DialogFragment(), NfcAdapter.ReaderCallback {
             state = State.CONNECTING
         }
 
-        val reader = Reader(tag)
+        val reader = Reader(isoDep)
         try {
             reader.connect()
         } catch (e: Exception) {
